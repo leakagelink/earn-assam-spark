@@ -136,10 +136,12 @@ export const getDashboard = createServerFn({ method: "GET" })
       context.supabase.from("favourites").select("*,provider_profiles(display_name,skill,district,rating)").eq("user_id", context.userId),
       context.supabase.from("notifications").select("*").eq("user_id", context.userId).order("created_at", { ascending: false }).limit(20),
     ]);
-    let providerBookings: unknown[] = []; let wallet = null; let withdrawals: unknown[] = [];
+    let providerBookings: Database["public"]["Tables"]["bookings"]["Row"][] = [];
+    let wallet: Database["public"]["Tables"]["wallets"]["Row"] | null = null;
+    let withdrawals: Database["public"]["Tables"]["withdrawal_requests"]["Row"][] = [];
     if (provider) {
       const results = await Promise.all([
-        context.supabase.from("bookings").select("*,profiles!bookings_customer_id_fkey(full_name,phone),services(name)").eq("provider_id", provider.id).order("created_at", { ascending: false }),
+        context.supabase.from("bookings").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
         context.supabase.from("wallets").select("*").eq("provider_id", provider.id).maybeSingle(),
         context.supabase.from("withdrawal_requests").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
       ]);
