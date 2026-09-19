@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocks: {
+        Row: {
+          created_at: string
+          district_id: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          district_id: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          district_id?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           booking_date: string
@@ -69,6 +104,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "public_provider_listings"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -100,6 +142,30 @@ export type Database = {
           id?: string
           is_active?: boolean
           minimum_withdrawal?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      districts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
           updated_at?: string
         }
         Relationships: []
@@ -153,42 +219,73 @@ export type Database = {
           account_type: Database["public"]["Enums"]["app_role"]
           address: string | null
           avatar_url: string | null
+          block_id: string | null
           block_name: string | null
           created_at: string
           district: string | null
+          district_id: string | null
           full_name: string
           id: string
           phone: string | null
           updated_at: string
           village: string | null
+          village_id: string | null
         }
         Insert: {
           account_type?: Database["public"]["Enums"]["app_role"]
           address?: string | null
           avatar_url?: string | null
+          block_id?: string | null
           block_name?: string | null
           created_at?: string
           district?: string | null
+          district_id?: string | null
           full_name: string
           id: string
           phone?: string | null
           updated_at?: string
           village?: string | null
+          village_id?: string | null
         }
         Update: {
           account_type?: Database["public"]["Enums"]["app_role"]
           address?: string | null
           avatar_url?: string | null
+          block_id?: string | null
           block_name?: string | null
           created_at?: string
           district?: string | null
+          district_id?: string | null
           full_name?: string
           id?: string
           phone?: string | null
           updated_at?: string
           village?: string | null
+          village_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_village_id_fkey"
+            columns: ["village_id"]
+            isOneToOne: false
+            referencedRelation: "villages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       provider_kyc: {
         Row: {
@@ -235,11 +332,13 @@ export type Database = {
       provider_profiles: {
         Row: {
           bio: string | null
+          block_id: string | null
           block_name: string | null
           completed_jobs: number
           created_at: string
           display_name: string
           district: string
+          district_id: string | null
           experience_years: number
           id: string
           is_available: boolean
@@ -255,14 +354,17 @@ export type Database = {
           updated_at: string
           user_id: string | null
           village: string | null
+          village_id: string | null
         }
         Insert: {
           bio?: string | null
+          block_id?: string | null
           block_name?: string | null
           completed_jobs?: number
           created_at?: string
           display_name: string
           district: string
+          district_id?: string | null
           experience_years?: number
           id?: string
           is_available?: boolean
@@ -278,14 +380,17 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           village?: string | null
+          village_id?: string | null
         }
         Update: {
           bio?: string | null
+          block_id?: string | null
           block_name?: string | null
           completed_jobs?: number
           created_at?: string
           display_name?: string
           district?: string
+          district_id?: string | null
           experience_years?: number
           id?: string
           is_available?: boolean
@@ -301,13 +406,35 @@ export type Database = {
           updated_at?: string
           user_id?: string | null
           village?: string | null
+          village_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "provider_profiles_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "provider_profiles_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_profiles_village_id_fkey"
+            columns: ["village_id"]
+            isOneToOne: false
+            referencedRelation: "villages"
             referencedColumns: ["id"]
           },
         ]
@@ -360,17 +487,139 @@ export type Database = {
         }
         Relationships: []
       }
+      villages: {
+        Row: {
+          block_id: string
+          created_at: string
+          gp_name: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          block_id: string
+          created_at?: string
+          gp_name: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          block_id?: string
+          created_at?: string
+          gp_name?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "villages_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      public_provider_listings: {
+        Row: {
+          bio: string | null
+          block_id: string | null
+          block_name: string | null
+          completed_jobs: number | null
+          display_name: string | null
+          district: string | null
+          district_id: string | null
+          experience_years: number | null
+          id: string | null
+          is_available: boolean | null
+          is_featured: boolean | null
+          is_verified: boolean | null
+          photo_url: string | null
+          price_unit: string | null
+          rating: number | null
+          review_count: number | null
+          service_id: string | null
+          service_name: string | null
+          skill: string | null
+          starting_price: number | null
+          village: string | null
+          village_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_profiles_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_profiles_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_profiles_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provider_profiles_village_id_fkey"
+            columns: ["village_id"]
+            isOneToOne: false
+            referencedRelation: "villages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      become_provider: {
+        Args: {
+          _bio: string
+          _block_id: string
+          _display_name: string
+          _district_id: string
+          _experience_years: number
+          _phone: string
+          _price_unit: string
+          _service_id: string
+          _skill: string
+          _starting_price: number
+          _village_id: string
+        }
+        Returns: string
+      }
+      claim_first_admin: { Args: never; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      review_kyc: {
+        Args: { _approve: boolean; _kyc_id: string; _reason?: string }
+        Returns: boolean
+      }
+      submit_kyc: {
+        Args: {
+          _aadhaar_path: string
+          _certificate_path: string
+          _pan_path: string
+        }
+        Returns: string
       }
     }
     Enums: {
