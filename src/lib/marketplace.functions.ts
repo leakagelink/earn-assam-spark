@@ -128,13 +128,15 @@ export const createBooking = createServerFn({ method: "POST" })
 export const getDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [{ data: roles }, { data: provider }, { data: customerBookings }, { data: payments }, { data: favourites }, { data: notifications }] = await Promise.all([
+    const [{ data: roles }, { data: provider }, { data: customerBookings }, { data: payments }, { data: favourites }, { data: notifications }, { data: paymentMethods }, { data: commission }] = await Promise.all([
       context.supabase.from("user_roles").select("role").eq("user_id", context.userId),
       context.supabase.from("provider_profiles").select("*").eq("user_id", context.userId).maybeSingle(),
       context.supabase.from("bookings").select("*,provider_profiles(display_name,skill,phone),services(name)").eq("customer_id", context.userId).order("created_at", { ascending: false }),
       context.supabase.from("payments").select("*").eq("customer_id", context.userId).order("created_at", { ascending: false }),
       context.supabase.from("favourites").select("*,provider_profiles(display_name,skill,district,rating)").eq("user_id", context.userId),
       context.supabase.from("notifications").select("*").eq("user_id", context.userId).order("created_at", { ascending: false }).limit(20),
+      context.supabase.from("payment_methods").select("id,method,label,demo_mode").eq("is_enabled", true),
+      context.supabase.from("commission_settings").select("commission_percent,minimum_withdrawal").eq("is_active", true).maybeSingle(),
     ]);
     let providerBookings: Database["public"]["Tables"]["bookings"]["Row"][] = [];
     let wallet: Database["public"]["Tables"]["wallets"]["Row"] | null = null;
@@ -147,7 +149,54 @@ export const getDashboard = createServerFn({ method: "GET" })
       ]);
       providerBookings = results[0].data ?? []; wallet = results[1].data; withdrawals = results[2].data ?? [];
     }
-    return { roles: (roles ?? []).map((row) => row.role), provider, customerBookings: customerBookings ?? [], providerBookings, payments: payments ?? [], favourites: favourites ?? [], notifications: notifications ?? [], wallet, withdrawals };
+    return { roles: (roles ?? []).map((row) => row.role), provider, customerBookings: customerBookings ?? [], providerBookings, payments: payments ?? [], favourites: favourites ?? [], notifications: notifications ?? [], paymentMethods: paymentMethods ?? [], commission, wallet, withdrawals };
+  });
+
+export const createPaymentReference = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ bookingId: z.string().uuid(), method: z.enum(["qr", "upi", "card", "net_banking", "bank", "paypal"]), reference: z.string().trim().min(3).max(100) }).parse(input))
+  .handler(async ({ context, data }) => {
+    const { data: booking } = await context.supabase.from("bookings").select("id,customer_id,quoted_price,status,payment_status").eq("id", data.bookingId).eq("customer_id", context.userId).maybeSingle();
+    if (!booking || !["accepted", "in_progress", "completed"].includes(booking.status) || booking.payment_status === "paid") throw new Error("This booking is not ready for payment.");
+    const { data: method } = await context.supabase.from("payment_methods").select("method,is_enabled,demo_mode").eq("method", data.method).eq("is_enabled", true).maybeSingle();
+    if (!method) throw new Error("This payment option is not enabled.");
+    const { error } = await context.supabase.from("payments").insert({ booking_id: booking.id, customer_id: context.userId, amount: booking.quoted_price, method: data.method, transaction_reference: data.reference, expires_at: data.method === "qr" ? new Date(Date.now() + 10 * 60_000).toISOString() : null });
+    if (error) throw new Error("Payment reference could not be submitted.");
+    return { pendingVerification: true, demoMode: method.demo_mode };
+  });
+
+export const requestWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ amount: z.number().positive(), method: z.enum(["upi", "bank"]), details: z.string().trim().min(3).max(200) }).parse(input))
+  .handler(async ({ context, data }) => {
+    const [{ data: provider }, { data: settings }] = await Promise.all([context.supabase.from("provider_profiles").select("id").eq("user_id", context.userId).maybeSingle(), context.supabase.from("commission_settings").select("minimum_withdrawal").eq("is_active", true).maybeSingle()]);
+    if (!provider) throw new Error("Provider account is required.");
+    if (data.amount < Number(settings?.minimum_withdrawal ?? 500)) throw new Error(`Minimum withdrawal is ₹${settings?.minimum_withdrawal ?? 500}.`);
+    const { error } = await context.supabase.from("withdrawal_requests").insert({ provider_id: provider.id, amount: data.amount, method: data.method, payout_details: { value: data.details } });
+    if (error) throw new Error("Withdrawal request could not be submitted.");
+    return { ok: true };
+  });
+
+export const reviewPayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ paymentId: z.string().uuid(), approved: z.boolean(), note: z.string().trim().max(300) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("payments").update({ status: data.approved ? "paid" : "failed", verification_note: data.note || null, verified_by: context.userId, verified_at: new Date().toISOString() }).eq("id", data.paymentId).eq("status", "pending");
+    if (error) throw new Error("Payment review could not be saved.");
+    return { ok: true };
+  });
+
+export const reviewWithdrawal = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ withdrawalId: z.string().uuid(), status: z.enum(["approved", "paid", "rejected"]), note: z.string().trim().max(300) }).parse(input))
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("withdrawal_requests").update({ status: data.status, admin_note: data.note || null, reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("id", data.withdrawalId);
+    if (error) throw new Error("Withdrawal review could not be saved.");
+    return { ok: true };
   });
 
 export const updateBookingStatus = createServerFn({ method: "POST" })
