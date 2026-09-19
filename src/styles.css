@@ -171,6 +171,11 @@
   backdrop-filter: blur(16px) saturate(130%);
 }
 
+@utility dialog-surface {
+  background: var(--popover);
+  border-color: var(--glass-border);
+}
+
 @utility text-balance { text-wrap: balance; }
 
 @keyframes reveal { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
