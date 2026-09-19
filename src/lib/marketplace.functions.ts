@@ -186,7 +186,7 @@ export const getAdminWorkspace = createServerFn({ method: "GET" })
     const [profiles, providers, kyc, bookings, payments, withdrawals, reports, disputes, coupons, plans, methods, commission] = await Promise.all([
       supabaseAdmin.from("profiles").select("id,full_name,phone,district,account_type,created_at").order("created_at", { ascending: false }).limit(100),
       supabaseAdmin.from("provider_profiles").select("id,display_name,skill,district,is_verified,is_featured,is_available,rating").order("created_at", { ascending: false }),
-      supabaseAdmin.from("provider_kyc").select("id,provider_user_id,status,rejection_reason,submitted_at,provider_profiles!provider_kyc_provider_user_id_fkey(display_name)").order("submitted_at", { ascending: false }),
+      supabaseAdmin.from("provider_kyc").select("id,provider_user_id,status,rejection_reason,created_at").order("created_at", { ascending: false }),
       supabaseAdmin.from("bookings").select("id,status,payment_status,quoted_price,booking_date,created_at").order("created_at", { ascending: false }).limit(100),
       supabaseAdmin.from("payments").select("*").order("created_at", { ascending: false }).limit(100),
       supabaseAdmin.from("withdrawal_requests").select("*").order("created_at", { ascending: false }),
