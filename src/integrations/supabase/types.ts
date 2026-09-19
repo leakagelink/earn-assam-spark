@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      blocked_providers: {
+        Row: {
+          created_at: string
+          provider_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          provider_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          provider_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocked_providers_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blocked_providers_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "public_provider_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blocks: {
         Row: {
           created_at: string
