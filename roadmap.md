@@ -11,7 +11,8 @@
 - [x] Add Assam District → Block → GP/Village location hierarchy
 - [x] Replace demo discovery data with live approved provider listings and advanced filters
 - [x] Add provider onboarding and private KYC document submission foundation
-- [ ] Add real booking lifecycle and customer/provider dashboards
-- [ ] Add hybrid payments, commission, wallet, receipts, refunds, and withdrawals
-- [ ] Add subscriptions, featured listings, referrals, coupons, reviews, reports, blocks, and disputes
-- [ ] Add complete role-protected admin management screens and notifications
+- [x] Add real booking lifecycle and customer/provider dashboards
+- [x] Add manual payment verification, commission settlement, wallets, receipts, and withdrawals
+- [ ] Connect a live payment gateway and complete automatic refunds
+- [ ] Add customer-facing subscriptions, featured listings, referrals, coupons, reviews, reports, blocks, and disputes
+- [ ] Complete all admin management screens, notification inbox, chat, and emergency-contact flows
