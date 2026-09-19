@@ -29,7 +29,7 @@ function AccountPage() {
   const [message, setMessage] = useState("");
   useEffect(() => { loadWorkspace().then(setWorkspace).catch(() => setMessage("Account details could not be loaded.")); }, [loadWorkspace]);
 
-  const kycLabel = workspace?.kyc?.status ? workspace.kyc.status[0].toUpperCase() + workspace.kyc.status.slice(1) : "Not submitted";
+  const kycLabel = workspace?.kyc?.status ? workspace.kyc.status.charAt(0).toUpperCase() + workspace.kyc.status.slice(1) : "Not submitted";
   return <AppShell title="My account" eyebrow="Customer workspace">
     {message && <p className="mb-5 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">{message}</p>}
     <section className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
