@@ -130,18 +130,18 @@ function Index() {
         <section className="mx-auto grid max-w-7xl items-center gap-10 px-4 pb-14 pt-12 sm:px-8 lg:grid-cols-12 lg:pt-16">
           <div className="reveal lg:col-span-7">
             <div className="glass-panel mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs"><span className="size-2 rounded-full bg-primary" /> KYC-verified providers across Assam</div>
-            <h1 className="text-balance font-display text-[2.65rem] font-extrabold leading-[0.98] sm:text-[4.15rem]">Find trusted <span className="text-primary">skilled</span><br />workers in your<br />block &amp; village.</h1>
+            <h1 className="text-balance font-display text-[2.25rem] font-extrabold leading-[1.02] sm:text-[4.15rem] sm:leading-[0.98]">Find trusted <span className="text-primary">skilled</span><br />workers in your<br />block &amp; village.</h1>
             <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">Search by District, Block and GP/Village. Book, pay securely and rate verified local professionals.</p>
 
             <div className="glass-panel mt-8 max-w-2xl rounded-2xl p-3">
-              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+              <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                 <label className="flex min-w-0 items-center gap-3 rounded-xl bg-glass px-3 py-2.5">
                   <MapPin className="size-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1"><span className="block text-[10px] uppercase text-muted-foreground">Location</span><select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full bg-transparent text-sm font-medium outline-none">{districts.map((item) => <option key={item} className="bg-popover" value={item}>{item}</option>)}</select></span>
+                  <span className="min-w-0 flex-1 overflow-hidden"><span className="block text-[10px] uppercase text-muted-foreground">Location</span><select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full min-w-0 bg-transparent text-sm font-medium outline-none">{districts.map((item) => <option key={item} className="bg-popover" value={item}>{item}</option>)}</select></span>
                 </label>
                 <label className="flex min-w-0 items-center gap-3 rounded-xl bg-glass px-3 py-2.5">
                   <Search className="size-4 shrink-0 text-primary" />
-                  <span className="min-w-0 flex-1"><span className="block text-[10px] uppercase text-muted-foreground">Service</span><input value={service} onChange={(e) => setService(e.target.value)} className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground" placeholder="Electrician, plumber…" /></span>
+                  <span className="min-w-0 flex-1 overflow-hidden"><span className="block text-[10px] uppercase text-muted-foreground">Service</span><input value={service} onChange={(e) => setService(e.target.value)} className="w-full min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-muted-foreground" placeholder="Electrician, plumber…" /></span>
                 </label>
                 <Button size="xl" variant="kinetic" onClick={() => document.querySelector("#providers")?.scrollIntoView({ behavior: "smooth" })}><Search /> Search</Button>
               </div>
