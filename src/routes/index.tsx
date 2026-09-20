@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -9,13 +9,11 @@ import {
   Camera,
   CheckCircle2,
   ChevronRight,
-  CircleUserRound,
   Clock3,
   Filter,
   GraduationCap,
   Hammer,
   Heart,
-  Home,
   MapPin,
   MessageCircle,
   Search,
@@ -71,6 +69,7 @@ const demoImages: Record<string, string> = { "Bikash Das": bikashImage, "Mira Ph
 
 function Index() {
   const navigate = useNavigate();
+  const router = useRouter();
   const loadMarketplace = useServerFn(getMarketplace);
   const saveBooking = useServerFn(createBooking);
   const saveFavourite = useServerFn(toggleFavourite);
@@ -139,11 +138,12 @@ function Index() {
     setSignedIn(true);
     setAuthMessage("");
     setAuthOpen(false);
+    await router.invalidate();
     await navigate({ to: "/account" });
   }
 
   return (
-    <div className="kinetic-bg relative min-h-screen overflow-x-clip pb-24 text-foreground md:pb-0">
+    <div className="kinetic-bg relative min-h-screen overflow-x-clip text-foreground">
       <div className="glass-panel pointer-events-none absolute -left-60 -top-72 h-[34rem] w-[34rem] rotate-12 rounded-[2.5rem] opacity-60" />
       <div className="glass-panel pointer-events-none absolute right-[-18rem] top-28 h-[38rem] w-[30rem] -rotate-12 rounded-[2.5rem] opacity-40" />
 
@@ -217,8 +217,6 @@ function Index() {
 
         <section id="earn" className="mx-auto grid max-w-7xl gap-5 px-4 py-14 sm:px-8 lg:grid-cols-2"><div className="glass-panel rounded-2xl p-6"><BriefcaseBusiness className="size-6 text-primary" /><h2 className="mt-4 font-display text-2xl font-bold">Post a job</h2><p className="mt-2 max-w-md text-sm text-muted-foreground">Describe what you need and receive responses from skilled locals near you.</p><Button className="mt-5" variant="light">Post now <ArrowRight /></Button></div><div className="rounded-2xl bg-primary p-6 text-primary-foreground"><WalletCards className="size-6" /><h2 className="mt-4 font-display text-2xl font-bold">Turn your skill into income</h2><p className="mt-2 max-w-md text-sm opacity-75">Complete KYC, set your price and start receiving work in your district.</p><Button className="mt-5" variant="light" onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}>Become a provider <ArrowRight /></Button></div></section>
       </main>
-
-      <nav className="glass-panel fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] md:hidden">{[[Home,"Home"],[Search,"Search"],[BriefcaseBusiness,"Jobs"],[CalendarDays,"Bookings"],[CircleUserRound,"Profile"]].map(([Icon,label],i) => { const NavIcon = Icon as typeof Home; return <button key={label as string} onClick={() => i === 4 ? setAuthOpen(true) : document.querySelector(i === 0 ? "#top" : i === 1 ? "#services" : i === 2 ? "#earn" : "#providers")?.scrollIntoView({behavior:"smooth"})} className={`flex h-16 min-w-0 flex-col items-center justify-center gap-1 overflow-hidden text-[10px] ${i === 0 ? "text-primary" : "text-muted-foreground"}`}><NavIcon className="size-5 shrink-0" /><span className="max-w-full truncate px-1">{label as string}</span></button>})}</nav>
 
        <Dialog open={Boolean(booking)} onOpenChange={(open) => !open && setBooking(null)}><DialogContent className="dialog-surface max-h-[90dvh] w-[calc(100%-2rem)] max-w-md overflow-y-auto text-foreground">{bookingDone ? <div className="py-6 text-center"><CheckCircle2 className="mx-auto size-12 text-primary" /><DialogTitle className="mt-4">Booking request sent</DialogTitle><DialogDescription className="mt-2">{booking?.display_name} will confirm your date and final price.</DialogDescription><Button asChild className="mt-6" variant="kinetic"><Link to="/dashboard">Track booking</Link></Button></div> : <><DialogHeader><DialogTitle>Book {booking?.display_name}</DialogTitle><DialogDescription>Choose your preferred date, time and service address.</DialogDescription></DialogHeader><form className="grid gap-4" onSubmit={async (event) => { event.preventDefault(); if (!booking) return; setBookingMessage(""); const form = new FormData(event.currentTarget); try { await saveBooking({ data: { providerId: booking.id, serviceId: booking.service_id, bookingDate: String(form.get("date")), bookingTime: String(form.get("time")), serviceAddress: String(form.get("address")), notes: String(form.get("notes") || "") } }); setBookingDone(true); } catch (error) { setBookingMessage(error instanceof Error ? error.message : "Booking could not be created."); } }}><div className="grid gap-3 min-[380px]:grid-cols-2"><div className="min-w-0"><Label htmlFor="date">Date</Label><Input id="date" name="date" type="date" min={new Date().toISOString().slice(0,10)} required className="mt-2 w-full min-w-0" /></div><div className="min-w-0"><Label htmlFor="time">Time</Label><Input id="time" name="time" type="time" required className="mt-2 w-full min-w-0" /></div></div><div><Label htmlFor="address">Service address</Label><Input id="address" name="address" required placeholder="House, village, landmark" className="mt-2" /></div><div><Label htmlFor="notes">Notes</Label><Input id="notes" name="notes" placeholder="Describe the work" className="mt-2" /></div><div className="flex items-center justify-between rounded-xl bg-glass p-3 text-sm"><span className="text-muted-foreground">Starting price</span><strong>₹{Number(booking?.starting_price ?? 0).toLocaleString("en-IN")}/{booking?.price_unit}</strong></div>{bookingMessage && <p className="text-sm text-destructive">{bookingMessage}</p>}<Button type="submit" size="xl" variant="kinetic">Request booking <CalendarDays /></Button></form></>}</DialogContent></Dialog>
 
