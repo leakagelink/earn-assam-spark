@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 type Dashboard = Awaited<ReturnType<typeof getDashboard>>;
 type BookingRow = Database["public"]["Tables"]["bookings"]["Row"];
+type MemberPayload = { action: "review" | "report" | "dispute" | "block" | "unblock" | "message" | "notification" | "emergency" | "coupon" | "referral" | "subscription" | "featured" | "refund"; bookingId?: string; providerId?: string; paymentId?: string; planId?: string; notificationId?: string; contactId?: string; text?: string; secondary?: string; rating?: number };
 
 function DashboardPage() {
   const load = useServerFn(getDashboard);
@@ -38,7 +39,7 @@ function DashboardPage() {
   const providerBookings = data?.providerBookings ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const statusAction = async (id: string, status: "accepted" | "rejected" | "in_progress" | "completed" | "cancelled") => { try { await changeStatus({ data: { bookingId: id, status } }); await refresh(); } catch (error) { setMessage(error instanceof Error ? error.message : "Status could not be changed."); } };
-  const act = async (payload: Parameters<typeof memberAction>[0]["data"], success: string) => { try { await memberAction({ data: payload }); setMessage(success); await refresh(); } catch (error) { setMessage(error instanceof Error ? error.message : "Action could not be completed."); } };
+  const act = async (payload: MemberPayload, success: string) => { try { await memberAction({ data: payload }); setMessage(success); await refresh(); } catch (error) { setMessage(error instanceof Error ? error.message : "Action could not be completed."); } };
   return <AppShell title="Bookings & earnings" eyebrow="Live workspace">
     {message && <p className="mb-5 rounded-md border border-glass-border bg-glass p-3 text-sm">{message}</p>}
     <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
