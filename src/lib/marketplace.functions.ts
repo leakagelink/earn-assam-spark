@@ -50,7 +50,10 @@ export const getMarketplace = createServerFn({ method: "GET" }).handler(async ()
     client.from("villages").select("id,block_id,name,gp_name").eq("is_active", true).order("name"),
   ]);
   const error = providers.error ?? services.error ?? districts.error ?? blocks.error ?? villages.error;
-  if (error) throw new Error("Marketplace data is temporarily unavailable.");
+  if (error) {
+    console.error("Marketplace query failed", error.message);
+    throw new Error("Marketplace data is temporarily unavailable.");
+  }
   return {
     providers: providers.data ?? [], services: services.data ?? [], districts: districts.data ?? [],
     blocks: blocks.data ?? [], villages: villages.data ?? [],
