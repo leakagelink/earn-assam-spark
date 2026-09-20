@@ -25,6 +25,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   Dialog,
   DialogContent,
@@ -148,10 +149,7 @@ function Index() {
       <div className="glass-panel pointer-events-none absolute right-[-18rem] top-28 h-[38rem] w-[30rem] -rotate-12 rounded-[2.5rem] opacity-40" />
 
       <header className="relative z-20 mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 pt-4 sm:flex sm:justify-between sm:px-8 sm:pt-6">
-        <a href="#top" className="flex min-w-0 items-center gap-2.5 sm:gap-3" aria-label="SkillEarn Assam home">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary font-display text-lg font-extrabold text-primary-foreground shadow-lg">SE</span>
-          <span className="min-w-0"><strong className="block truncate font-display text-base leading-none sm:text-lg">SkillEarn Assam<span className="text-primary">.</span></strong><small className="mt-1 block truncate text-[9px] text-muted-foreground sm:text-[10px]">LOCAL SKILLS · REAL EARNING</small></span>
-        </a>
+        <BrandLogo />
         <nav className="hidden items-center gap-7 text-sm text-muted-foreground lg:flex">
           <a href="#services" className="transition-colors hover:text-foreground">Services</a>
           <a href="#providers" className="transition-colors hover:text-foreground">Providers</a>
