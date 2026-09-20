@@ -1,10 +1,10 @@
 # SkillEarn Assam completion roadmap
 
-- [x] Complete manual payment verification and automatic refund records (built-in payments unavailable for this India marketplace)
-- [x] Complete subscriptions, featured listing requests, referrals and coupons
-- [x] Complete reviews, reports, blocking, disputes and booking messages
-- [x] Add notification inbox and emergency contact workflows
-- [x] Complete admin management controls for marketplace configuration
+- [ ] Polish manual payment verification, downloadable receipts and refund status (built-in payments unavailable for this India marketplace)
+- [ ] Build dedicated subscriptions, featured listings, referrals and coupon workflows
+- [ ] Build dedicated reviews, reports, blocking, disputes and booking chat workflows
+- [ ] Build a complete notification inbox and emergency contact workflow
+- [ ] Complete admin management screens for users, providers, growth tools, safety and marketplace configuration
 - [x] Verify public desktop/mobile layout, production build and database security
 - [ ] Verify every protected role flow with authenticated customer, provider and admin test accounts
 - [x] Fix post-login profile access and replace mobile section scrolling with separate app screens
