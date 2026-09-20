@@ -34,8 +34,8 @@ async function requireAdmin(context: { supabase: any; userId: string }) {
 
 function publicClient() {
   return createClient<Database>(
-    process.env["SUPABASE_URL"]!,
-    process.env["SUPABASE_PUBLISHABLE_KEY"]!,
+    import.meta.env["VITE_SUPABASE_URL"],
+    import.meta.env["VITE_SUPABASE_PUBLISHABLE_KEY"],
     { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
   );
 }
@@ -50,7 +50,10 @@ export const getMarketplace = createServerFn({ method: "GET" }).handler(async ()
     client.from("villages").select("id,block_id,name,gp_name").eq("is_active", true).order("name"),
   ]);
   const error = providers.error ?? services.error ?? districts.error ?? blocks.error ?? villages.error;
-  if (error) throw new Error("Marketplace data is temporarily unavailable.");
+  if (error) {
+    console.error("Marketplace query failed", error.message);
+    throw new Error("Marketplace data is temporarily unavailable.");
+  }
   return {
     providers: providers.data ?? [], services: services.data ?? [], districts: districts.data ?? [],
     blocks: blocks.data ?? [], villages: villages.data ?? [],
