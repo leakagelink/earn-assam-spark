@@ -126,7 +126,7 @@ function Index() {
     const result = authMode === "signin"
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
-    setAuthMessage(result.error ? result.error.message : authMode === "signin" ? "Signed in successfully." : "Check your email to confirm your account.");
+    setAuthMessage(result.error ? result.error.message : authMode === "signin" ? "Signed in successfully." : "Account created successfully. You are now signed in.");
   }
 
   return (
