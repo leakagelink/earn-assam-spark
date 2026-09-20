@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -70,6 +70,7 @@ type Provider = Market["providers"][number] & { image: string; tags: string[] };
 const demoImages: Record<string, string> = { "Bikash Das": bikashImage, "Mira Phukan": miraImage, "Jiten Sharma": jitenImage };
 
 function Index() {
+  const navigate = useNavigate();
   const loadMarketplace = useServerFn(getMarketplace);
   const saveBooking = useServerFn(createBooking);
   const saveFavourite = useServerFn(toggleFavourite);
@@ -126,7 +127,19 @@ function Index() {
     const result = authMode === "signin"
       ? await supabase.auth.signInWithPassword({ email, password })
       : await supabase.auth.signUp({ email, password });
-    setAuthMessage(result.error ? result.error.message : authMode === "signin" ? "Signed in successfully." : "Account created successfully. You are now signed in.");
+    if (result.error) {
+      setAuthMessage(result.error.message);
+      return;
+    }
+    if (!result.data.session) {
+      setAuthMessage("Account created, but automatic sign-in failed. Please sign in.");
+      setAuthMode("signin");
+      return;
+    }
+    setSignedIn(true);
+    setAuthMessage("");
+    setAuthOpen(false);
+    await navigate({ to: "/account" });
   }
 
   return (
