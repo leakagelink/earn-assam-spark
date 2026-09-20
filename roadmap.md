@@ -7,3 +7,4 @@
 - [x] Complete admin management controls for marketplace configuration
 - [x] Verify public desktop/mobile layout, production build and database security
 - [ ] Verify every protected role flow with authenticated customer, provider and admin test accounts
+- [x] Fix post-login profile access and replace mobile section scrolling with separate app screens
