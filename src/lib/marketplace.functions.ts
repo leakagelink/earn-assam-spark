@@ -82,7 +82,7 @@ export const claimFirstAdmin = createServerFn({ method: "POST" })
 
 export const saveProviderProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => providerSchema.parse(input))
+  .validator((input) => providerSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: district }, { data: block }, { data: village }, { data: service }] = await Promise.all([
@@ -101,7 +101,7 @@ export const saveProviderProfile = createServerFn({ method: "POST" })
 
 export const submitKyc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ aadhaarPath: z.string().min(3), panPath: z.string().min(3), certificatePath: z.string() }).parse(input))
+  .validator((input) => z.object({ aadhaarPath: z.string().min(3), panPath: z.string().min(3), certificatePath: z.string() }).parse(input))
   .handler(async ({ context, data }) => {
     const prefix = `${context.userId}/`;
     if (!data.aadhaarPath.startsWith(prefix) || !data.panPath.startsWith(prefix) || (data.certificatePath && !data.certificatePath.startsWith(prefix))) throw new Error("Invalid document upload.");
@@ -115,7 +115,7 @@ export const submitKyc = createServerFn({ method: "POST" })
 
 export const createBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => bookingSchema.parse(input))
+  .validator((input) => bookingSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { data: provider } = await context.supabase.from("provider_profiles").select("id,service_id,starting_price,is_verified,is_available").eq("id", data.providerId).maybeSingle();
     if (!provider?.is_verified || !provider.is_available || provider.service_id !== data.serviceId) throw new Error("This provider is not available for booking.");
@@ -172,7 +172,7 @@ export const getDashboard = createServerFn({ method: "GET" })
 
 export const getReceipt = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ paymentId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ paymentId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     const { data: payment } = await context.supabase.from("payments").select("*").eq("id", data.paymentId).eq("customer_id", context.userId).maybeSingle();
     if (!payment || !["paid", "refunded"].includes(payment.status)) throw new Error("Receipt is not available.");
@@ -184,7 +184,7 @@ export const getReceipt = createServerFn({ method: "GET" })
 
 export const createPaymentReference = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ bookingId: z.string().uuid(), method: z.enum(["qr", "upi", "card", "net_banking", "bank", "paypal"]), reference: z.string().trim().min(3).max(100) }).parse(input))
+  .validator((input) => z.object({ bookingId: z.string().uuid(), method: z.enum(["qr", "upi", "card", "net_banking", "bank", "paypal"]), reference: z.string().trim().min(3).max(100) }).parse(input))
   .handler(async ({ context, data }) => {
     const { data: booking } = await context.supabase.from("bookings").select("id,customer_id,quoted_price,status,payment_status").eq("id", data.bookingId).eq("customer_id", context.userId).maybeSingle();
     if (!booking || !["accepted", "in_progress", "completed"].includes(booking.status) || booking.payment_status === "paid") throw new Error("This booking is not ready for payment.");
@@ -199,7 +199,7 @@ export const createPaymentReference = createServerFn({ method: "POST" })
 
 export const requestWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ amount: z.number().positive(), method: z.enum(["upi", "bank"]), details: z.string().trim().min(3).max(200) }).parse(input))
+  .validator((input) => z.object({ amount: z.number().positive(), method: z.enum(["upi", "bank"]), details: z.string().trim().min(3).max(200) }).parse(input))
   .handler(async ({ context, data }) => {
     const [{ data: provider }, { data: settings }] = await Promise.all([context.supabase.from("provider_profiles").select("id").eq("user_id", context.userId).maybeSingle(), context.supabase.from("commission_settings").select("minimum_withdrawal").eq("is_active", true).maybeSingle()]);
     if (!provider) throw new Error("Provider account is required.");
@@ -213,7 +213,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
 
 export const reviewPayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ paymentId: z.string().uuid(), approved: z.boolean(), note: z.string().trim().max(300) }).parse(input))
+  .validator((input) => z.object({ paymentId: z.string().uuid(), approved: z.boolean(), note: z.string().trim().max(300) }).parse(input))
   .handler(async ({ context, data }) => {
     await requireAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -224,7 +224,7 @@ export const reviewPayment = createServerFn({ method: "POST" })
 
 export const reviewWithdrawal = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ withdrawalId: z.string().uuid(), status: z.enum(["approved", "paid", "rejected"]), note: z.string().trim().max(300) }).parse(input))
+  .validator((input) => z.object({ withdrawalId: z.string().uuid(), status: z.enum(["approved", "paid", "rejected"]), note: z.string().trim().max(300) }).parse(input))
   .handler(async ({ context, data }) => {
     await requireAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -235,7 +235,7 @@ export const reviewWithdrawal = createServerFn({ method: "POST" })
 
 export const updateBookingStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ bookingId: z.string().uuid(), status: z.enum(["accepted", "rejected", "in_progress", "completed", "cancelled"]) }).parse(input))
+  .validator((input) => z.object({ bookingId: z.string().uuid(), status: z.enum(["accepted", "rejected", "in_progress", "completed", "cancelled"]) }).parse(input))
   .handler(async ({ context, data }) => {
     const { data: booking } = await context.supabase.from("bookings").select("customer_id,provider_id,status").eq("id", data.bookingId).maybeSingle();
     if (!booking) throw new Error("Booking not found.");
@@ -248,7 +248,7 @@ export const updateBookingStatus = createServerFn({ method: "POST" })
 
 export const setProviderAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ available: z.boolean() }).parse(input))
+  .validator((input) => z.object({ available: z.boolean() }).parse(input))
   .handler(async ({ context, data }) => {
     const { error } = await context.supabase.from("provider_profiles").update({ is_available: data.available }).eq("user_id", context.userId);
     if (error) throw new Error("Availability could not be changed.");
@@ -257,7 +257,7 @@ export const setProviderAvailability = createServerFn({ method: "POST" })
 
 export const toggleFavourite = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ providerId: z.string().uuid() }).parse(input))
+  .validator((input) => z.object({ providerId: z.string().uuid() }).parse(input))
   .handler(async ({ context, data }) => {
     const { data: current } = await context.supabase.from("favourites").select("provider_id").eq("user_id", context.userId).eq("provider_id", data.providerId).maybeSingle();
     const result = current ? await context.supabase.from("favourites").delete().eq("user_id", context.userId).eq("provider_id", data.providerId) : await context.supabase.from("favourites").insert({ user_id: context.userId, provider_id: data.providerId });
@@ -300,7 +300,7 @@ export const getAdminWorkspace = createServerFn({ method: "GET" })
 
 export const reviewKyc = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ providerUserId: z.string().uuid(), approved: z.boolean(), reason: z.string().trim().max(300) }).parse(input))
+  .validator((input) => z.object({ providerUserId: z.string().uuid(), approved: z.boolean(), reason: z.string().trim().max(300) }).parse(input))
   .handler(async ({ context, data }) => {
     await requireAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -319,7 +319,7 @@ const memberActionSchema = z.object({
 
 export const runMemberAction = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => memberActionSchema.parse(input))
+  .validator((input) => memberActionSchema.parse(input))
   .handler(async ({ context, data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.action === "notification" && data.notificationId) {
@@ -369,7 +369,7 @@ export const runMemberAction = createServerFn({ method: "POST" })
   });
 
 const adminActionSchema = z.object({ action: z.enum(["method", "commission", "feature", "subscription", "report", "dispute", "refund", "coupon", "plan", "service", "announcement", "district", "block", "village", "notification"]), id: z.string().optional(), status: z.string().optional(), name: z.string().trim().max(100).optional(), value: z.number().optional(), secondary: z.number().optional(), text: z.string().trim().max(1000).optional(), enabled: z.boolean().optional() });
-export const runAdminAction = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input) => adminActionSchema.parse(input)).handler(async ({ context, data }) => {
+export const runAdminAction = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).validator((input) => adminActionSchema.parse(input)).handler(async ({ context, data }) => {
   await requireAdmin(context); const { supabaseAdmin } = await import("@/integrations/supabase/client.server"); let error: unknown = null;
   if (data.action === "method" && data.id) ({ error } = await supabaseAdmin.from("payment_methods").update({ is_enabled: Boolean(data.enabled) }).eq("id", data.id));
   else if (data.action === "commission" && data.id && data.value !== undefined && data.secondary !== undefined) ({ error } = await supabaseAdmin.from("commission_settings").update({ commission_percent: data.value, minimum_withdrawal: data.secondary }).eq("id", data.id));
