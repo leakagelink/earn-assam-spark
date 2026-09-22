@@ -156,6 +156,7 @@ export const getDashboard = createServerFn({ method: "GET" })
     let withdrawals: Database["public"]["Tables"]["withdrawal_requests"]["Row"][] = [];
     let subscriptions: Database["public"]["Tables"]["provider_subscriptions"]["Row"][] = [];
     let featuredRequests: Database["public"]["Tables"]["featured_requests"]["Row"][] = [];
+    let providerReviews: Database["public"]["Tables"]["reviews"]["Row"][] = [];
     if (provider) {
       const results = await Promise.all([
         context.supabase.from("bookings").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
@@ -163,11 +164,14 @@ export const getDashboard = createServerFn({ method: "GET" })
         context.supabase.from("withdrawal_requests").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
         context.supabase.from("provider_subscriptions").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
         context.supabase.from("featured_requests").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
+        context.supabase.from("reviews").select("*").eq("provider_id", provider.id).order("created_at", { ascending: false }),
       ]);
-      providerBookings = results[0].data ?? []; wallet = results[1].data; withdrawals = results[2].data ?? []; subscriptions = results[3].data ?? []; featuredRequests = results[4].data ?? [];
+      providerBookings = results[0].data ?? []; wallet = results[1].data; withdrawals = results[2].data ?? []; subscriptions = results[3].data ?? []; featuredRequests = results[4].data ?? []; providerReviews = results[5].data ?? [];
     }
     const accessibleBookingIds = new Set([...customerBookings ?? [], ...providerBookings].map((booking) => booking.id));
-    return { roles: (roles ?? []).map((row) => row.role), provider, customerBookings: customerBookings ?? [], providerBookings, payments: payments ?? [], favourites: favourites ?? [], notifications: notifications ?? [], paymentMethods: paymentMethods ?? [], commission, wallet, withdrawals, plans: plans ?? [], subscriptions, featuredRequests, referrals: referrals ?? [], reports: reports ?? [], disputes: disputes ?? [], emergencyContacts: emergencyContacts ?? [], refunds: refunds ?? [], announcements: announcements ?? [], settings: settings ?? [], reviews: reviews ?? [], messages: (messages ?? []).filter((item) => accessibleBookingIds.has(item.booking_id)), blockedProviders: blockedProviders ?? [], referralCode, referralSettings, coupons: coupons ?? [] };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: referralLeaders } = await supabaseAdmin.from("referral_codes").select("code,uses,rewards_earned").gt("uses", 0).order("uses", { ascending: false }).limit(10);
+    return { roles: (roles ?? []).map((row) => row.role), provider, customerBookings: customerBookings ?? [], providerBookings, payments: payments ?? [], favourites: favourites ?? [], notifications: notifications ?? [], paymentMethods: paymentMethods ?? [], commission, wallet, withdrawals, plans: plans ?? [], subscriptions, featuredRequests, referrals: referrals ?? [], reports: reports ?? [], disputes: disputes ?? [], emergencyContacts: emergencyContacts ?? [], refunds: refunds ?? [], announcements: announcements ?? [], settings: settings ?? [], reviews: reviews ?? [], providerReviews, messages: (messages ?? []).filter((item) => accessibleBookingIds.has(item.booking_id)), blockedProviders: blockedProviders ?? [], referralCode, referralSettings, referralLeaders: referralLeaders ?? [], coupons: coupons ?? [] };
   });
 
 export const getReceipt = createServerFn({ method: "GET" })
@@ -219,6 +223,7 @@ export const reviewPayment = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("payments").update({ status: data.approved ? "paid" : "failed", verification_note: data.note || null, verified_by: context.userId, verified_at: new Date().toISOString() }).eq("id", data.paymentId).eq("status", "pending");
     if (error) throw new Error("Payment review could not be saved.");
+    await supabaseAdmin.from("admin_audit_log").insert({ admin_id:context.userId,action:data.approved?"payment_approved":"payment_rejected",entity_type:"payment",entity_id:data.paymentId,details:{ note:data.note } });
     return { ok: true };
   });
 
@@ -230,6 +235,7 @@ export const reviewWithdrawal = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("withdrawal_requests").update({ status: data.status, admin_note: data.note || null, reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("id", data.withdrawalId);
     if (error) throw new Error("Withdrawal review could not be saved.");
+    await supabaseAdmin.from("admin_audit_log").insert({ admin_id:context.userId,action:`withdrawal_${data.status}`,entity_type:"withdrawal",entity_id:data.withdrawalId,details:{ note:data.note } });
     return { ok: true };
   });
 
@@ -308,6 +314,7 @@ export const reviewKyc = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("provider_kyc").update({ status, rejection_reason: data.approved ? null : data.reason || "Documents need correction.", reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("provider_user_id", data.providerUserId);
     if (error) throw new Error("KYC review could not be saved.");
     await supabaseAdmin.from("provider_profiles").update({ is_verified: data.approved }).eq("user_id", data.providerUserId);
+    await supabaseAdmin.from("admin_audit_log").insert({ admin_id:context.userId,action:data.approved?"kyc_approved":"kyc_rejected",entity_type:"kyc",details:{ provider_user_id:data.providerUserId,reason:data.reason } });
     return { ok: true };
   });
 
@@ -375,8 +382,8 @@ export const runAdminAction = createServerFn({ method: "POST" }).middleware([req
   else if (data.action === "commission" && data.id && data.value !== undefined && data.secondary !== undefined) ({ error } = await supabaseAdmin.from("commission_settings").update({ commission_percent: data.value, minimum_withdrawal: data.secondary }).eq("id", data.id));
   else if (data.action === "feature" && data.id) { ({ error } = await supabaseAdmin.from("provider_profiles").update({ is_featured: Boolean(data.enabled) }).eq("id", data.id)); await supabaseAdmin.from("featured_requests").update({ status: data.enabled ? "approved" : "rejected", starts_at: data.enabled ? new Date().toISOString() : null }).eq("provider_id", data.id).eq("status", "pending"); }
   else if (data.action === "subscription" && data.id && data.status) ({ error } = await supabaseAdmin.from("provider_subscriptions").update(data.status === "active" ? { status: data.status, starts_at: new Date().toISOString(), expires_at: new Date(Date.now()+30*86400000).toISOString() } : { status: data.status }).eq("id", data.id));
-  else if (data.action === "report" && data.id && data.status) ({ error } = await supabaseAdmin.from("user_reports").update({ status: data.status, details: data.text || null }).eq("id", data.id));
-  else if (data.action === "dispute" && data.id && data.status) ({ error } = await supabaseAdmin.from("booking_disputes").update({ status: data.status, resolution: data.text || null, reviewed_by: context.userId }).eq("id", data.id));
+  else if (data.action === "report" && data.id && data.status) { ({ error } = await supabaseAdmin.from("user_reports").update({ status: data.status, details: data.text || null }).eq("id", data.id)); const {data:item}=await supabaseAdmin.from("user_reports").select("reporter_id").eq("id",data.id).maybeSingle(); if(item) await supabaseAdmin.from("notifications").insert({user_id:item.reporter_id,type:"report",title:"Report status updated",message:`Your report is now ${data.status}.`,data:{report_id:data.id}}); }
+  else if (data.action === "dispute" && data.id && data.status) { ({ error } = await supabaseAdmin.from("booking_disputes").update({ status: data.status, resolution: data.text || null, reviewed_by: context.userId }).eq("id", data.id)); const {data:item}=await supabaseAdmin.from("booking_disputes").select("raised_by").eq("id",data.id).maybeSingle(); if(item) await supabaseAdmin.from("notifications").insert({user_id:item.raised_by,type:"dispute",title:"Dispute status updated",message:`Your dispute is now ${data.status}.`,data:{dispute_id:data.id}}); }
   else if (data.action === "refund" && data.id && data.status) { ({ error } = await supabaseAdmin.from("refunds").update({ status: data.status, admin_note: data.text || null, reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("id", data.id)); if (data.status === "processed") { const { data: refund } = await supabaseAdmin.from("refunds").select("payment_id,booking_id").eq("id", data.id).single(); if (refund) { await supabaseAdmin.from("payments").update({ status: "refunded" }).eq("id", refund.payment_id); await supabaseAdmin.from("bookings").update({ payment_status: "refunded" }).eq("id", refund.booking_id); } } }
   else if (data.action === "coupon" && data.name) ({ error } = await supabaseAdmin.from("coupons").insert({ code: data.name.toUpperCase(), discount_type: "percent", discount_value: data.value || 10, minimum_booking: data.secondary || 0, expires_at: data.text || new Date(Date.now()+30*86400000).toISOString() }));
   else if (data.action === "plan" && data.name) ({ error } = await supabaseAdmin.from("subscription_plans").insert({ name: data.name, price: data.value || 0, benefits: { description: data.text || "Provider plan" } }));
