@@ -270,7 +270,7 @@ export const getAdminWorkspace = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await requireAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [profiles, providers, kyc, bookings, payments, withdrawals, reports, disputes, coupons, plans, methods, commission, refunds, announcements, services, locations, featured, reviews, referrals] = await Promise.all([
+    const [profiles, providers, kyc, bookings, payments, withdrawals, reports, disputes, coupons, plans, methods, commission, refunds, announcements, services, districts, blocks, villages, featured, reviews, referrals, subscriptions, audit] = await Promise.all([
       supabaseAdmin.from("profiles").select("id,full_name,phone,district,account_type,created_at").order("created_at", { ascending: false }).limit(100),
       supabaseAdmin.from("provider_profiles").select("id,display_name,skill,district,is_verified,is_featured,is_available,rating").order("created_at", { ascending: false }),
       supabaseAdmin.from("provider_kyc").select("id,provider_user_id,status,rejection_reason,created_at").order("created_at", { ascending: false }),
@@ -287,11 +287,15 @@ export const getAdminWorkspace = createServerFn({ method: "GET" })
       supabaseAdmin.from("admin_announcements").select("*").order("created_at", { ascending: false }),
       supabaseAdmin.from("services").select("*").order("name"),
       supabaseAdmin.from("districts").select("*").order("name"),
+      supabaseAdmin.from("blocks").select("*").order("name"),
+      supabaseAdmin.from("villages").select("*").order("name"),
       supabaseAdmin.from("featured_requests").select("*").order("created_at", { ascending: false }),
       supabaseAdmin.from("reviews").select("*").order("created_at", { ascending: false }),
       supabaseAdmin.from("referrals").select("*").order("created_at", { ascending: false }),
+      supabaseAdmin.from("provider_subscriptions").select("*").order("created_at", { ascending: false }),
+      supabaseAdmin.from("admin_audit_log").select("*").order("created_at", { ascending: false }).limit(50),
     ]);
-    return { profiles: profiles.data ?? [], providers: providers.data ?? [], kyc: kyc.data ?? [], bookings: bookings.data ?? [], payments: payments.data ?? [], withdrawals: withdrawals.data ?? [], reports: reports.data ?? [], disputes: disputes.data ?? [], coupons: coupons.data ?? [], plans: plans.data ?? [], methods: methods.data ?? [], commission: commission.data, refunds: refunds.data ?? [], announcements: announcements.data ?? [], services: services.data ?? [], locations: locations.data ?? [], featured: featured.data ?? [], reviews: reviews.data ?? [], referrals: referrals.data ?? [] };
+    return { profiles: profiles.data ?? [], providers: providers.data ?? [], kyc: kyc.data ?? [], bookings: bookings.data ?? [], payments: payments.data ?? [], withdrawals: withdrawals.data ?? [], reports: reports.data ?? [], disputes: disputes.data ?? [], coupons: coupons.data ?? [], plans: plans.data ?? [], methods: methods.data ?? [], commission: commission.data, refunds: refunds.data ?? [], announcements: announcements.data ?? [], services: services.data ?? [], districts: districts.data ?? [], blocks: blocks.data ?? [], villages: villages.data ?? [], featured: featured.data ?? [], reviews: reviews.data ?? [], referrals: referrals.data ?? [], subscriptions: subscriptions.data ?? [], audit: audit.data ?? [] };
   });
 
 export const reviewKyc = createServerFn({ method: "POST" })
@@ -338,7 +342,7 @@ export const runMemberAction = createServerFn({ method: "POST" })
       const { error } = await context.supabase.from("reviews").insert({ booking_id: booking.id, customer_id: context.userId, provider_id: booking.provider_id, rating: data.rating, comment: data.text || null }); if (error) throw new Error("Review already submitted or unavailable.");
     } else if (data.action === "review_reply" && data.bookingId && data.text) {
       const { data: provider } = await context.supabase.from("provider_profiles").select("id").eq("user_id", context.userId).maybeSingle(); if (!provider) throw new Error("Provider account required.");
-      const { error } = await context.supabase.from("reviews").update({ provider_reply: data.text, replied_at: new Date().toISOString() }).eq("booking_id", data.bookingId).eq("provider_id", provider.id); if (error) throw error;
+      const { error } = await supabaseAdmin.from("reviews").update({ provider_reply: data.text, replied_at: new Date().toISOString() }).eq("booking_id", data.bookingId).eq("provider_id", provider.id); if (error) throw error;
     } else if (data.action === "message" && data.bookingId && data.text) {
       const { data: booking } = await context.supabase.from("bookings").select("id,customer_id,provider_id").eq("id", data.bookingId).maybeSingle(); const { data: provider } = booking ? await context.supabase.from("provider_profiles").select("id").eq("id", booking.provider_id).eq("user_id", context.userId).maybeSingle() : { data: null }; if (!booking || (booking.customer_id !== context.userId && !provider)) throw new Error("Booking access required.");
       const { error } = await context.supabase.from("booking_messages").insert({ booking_id: booking.id, sender_id: context.userId, message: data.text }); if (error) throw error;
@@ -370,7 +374,7 @@ export const runAdminAction = createServerFn({ method: "POST" }).middleware([req
   if (data.action === "method" && data.id) ({ error } = await supabaseAdmin.from("payment_methods").update({ is_enabled: Boolean(data.enabled) }).eq("id", data.id));
   else if (data.action === "commission" && data.id && data.value !== undefined && data.secondary !== undefined) ({ error } = await supabaseAdmin.from("commission_settings").update({ commission_percent: data.value, minimum_withdrawal: data.secondary }).eq("id", data.id));
   else if (data.action === "feature" && data.id) { ({ error } = await supabaseAdmin.from("provider_profiles").update({ is_featured: Boolean(data.enabled) }).eq("id", data.id)); await supabaseAdmin.from("featured_requests").update({ status: data.enabled ? "approved" : "rejected", starts_at: data.enabled ? new Date().toISOString() : null }).eq("provider_id", data.id).eq("status", "pending"); }
-  else if (data.action === "subscription" && data.id && data.status) ({ error } = await supabaseAdmin.from("provider_subscriptions").update({ status: data.status, starts_at: data.status === "active" ? new Date().toISOString() : undefined, expires_at: data.status === "active" ? new Date(Date.now()+30*86400000).toISOString() : undefined }).eq("id", data.id));
+  else if (data.action === "subscription" && data.id && data.status) ({ error } = await supabaseAdmin.from("provider_subscriptions").update(data.status === "active" ? { status: data.status, starts_at: new Date().toISOString(), expires_at: new Date(Date.now()+30*86400000).toISOString() } : { status: data.status }).eq("id", data.id));
   else if (data.action === "report" && data.id && data.status) ({ error } = await supabaseAdmin.from("user_reports").update({ status: data.status, details: data.text || null }).eq("id", data.id));
   else if (data.action === "dispute" && data.id && data.status) ({ error } = await supabaseAdmin.from("booking_disputes").update({ status: data.status, resolution: data.text || null, reviewed_by: context.userId }).eq("id", data.id));
   else if (data.action === "refund" && data.id && data.status) { ({ error } = await supabaseAdmin.from("refunds").update({ status: data.status, admin_note: data.text || null, reviewed_by: context.userId, reviewed_at: new Date().toISOString() }).eq("id", data.id)); if (data.status === "processed") { const { data: refund } = await supabaseAdmin.from("refunds").select("payment_id,booking_id").eq("id", data.id).single(); if (refund) { await supabaseAdmin.from("payments").update({ status: "refunded" }).eq("id", refund.payment_id); await supabaseAdmin.from("bookings").update({ payment_status: "refunded" }).eq("id", refund.booking_id); } } }
