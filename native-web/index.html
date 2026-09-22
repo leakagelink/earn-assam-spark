@@ -2,12 +2,127 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1220" />
     <title>SkillEarn Assam</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --bg2: #101c33;
+        --mint: #34d399;
+        --mint-soft: rgba(52, 211, 153, 0.18);
+        --text: #e7eef9;
+        --muted: #8ea3c0;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background:
+          radial-gradient(1200px 700px at 80% -10%, rgba(52, 211, 153, 0.14), transparent 60%),
+          radial-gradient(900px 600px at -10% 110%, rgba(56, 130, 246, 0.16), transparent 55%),
+          linear-gradient(160deg, var(--bg), var(--bg2));
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .splash {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+        text-align: center;
+        animation: rise 0.7s ease-out both;
+      }
+      .mark {
+        width: 92px;
+        height: 92px;
+        border-radius: 26px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(145deg, rgba(52, 211, 153, 0.22), rgba(56, 130, 246, 0.18));
+        border: 1px solid rgba(52, 211, 153, 0.35);
+        box-shadow:
+          0 0 0 8px rgba(52, 211, 153, 0.05),
+          0 18px 50px rgba(0, 0, 0, 0.45),
+          0 0 60px rgba(52, 211, 153, 0.15);
+        animation: glow 2.2s ease-in-out infinite;
+      }
+      .mark span {
+        font-size: 38px;
+        font-weight: 800;
+        letter-spacing: -1px;
+        background: linear-gradient(120deg, var(--mint), #7dd3fc);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+      }
+      h1 em {
+        font-style: normal;
+        color: var(--mint);
+      }
+      p.tag {
+        font-size: 14px;
+        color: var(--muted);
+        letter-spacing: 0.6px;
+        margin-top: -12px;
+      }
+      .loader {
+        width: 148px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .loader::after {
+        content: "";
+        display: block;
+        width: 45%;
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--mint), #7dd3fc);
+        animation: slide 1.1s ease-in-out infinite;
+      }
+      .foot {
+        position: absolute;
+        bottom: calc(24px + env(safe-area-inset-bottom));
+        font-size: 11px;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: rgba(142, 163, 192, 0.7);
+      }
+      @keyframes slide {
+        0% { transform: translateX(-110%); }
+        100% { transform: translateX(320%); }
+      }
+      @keyframes glow {
+        0%, 100% { box-shadow: 0 0 0 8px rgba(52,211,153,0.05), 0 18px 50px rgba(0,0,0,0.45), 0 0 40px rgba(52,211,153,0.12); }
+        50% { box-shadow: 0 0 0 12px rgba(52,211,153,0.07), 0 18px 50px rgba(0,0,0,0.45), 0 0 80px rgba(52,211,153,0.28); }
+      }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(18px) scale(0.97); }
+        to { opacity: 1; transform: none; }
+      }
+    </style>
   </head>
   <body>
-    <!-- Placeholder shell. The Android/iOS app loads the live SkillEarn Assam
-         site (see capacitor.config.ts -> server.url), so this page is only
-         there to satisfy Capacitor's webDir requirement. -->
+    <!-- Splash shell. The Android app loads the live SkillEarn Assam site
+         (capacitor.config.ts -> server.url); this branded splash shows while
+         the WebView connects. -->
+    <main class="splash">
+      <div class="mark"><span>SE</span></div>
+      <h1>SkillEarn <em>Assam</em></h1>
+      <p class="tag">Trusted local services, verified providers</p>
+      <div class="loader" aria-label="Loading"></div>
+    </main>
+    <div class="foot">Made for Assam</div>
   </body>
 </html>
