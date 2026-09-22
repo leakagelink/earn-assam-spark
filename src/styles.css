@@ -194,3 +194,9 @@
   .reveal { animation: reveal 600ms ease both; }
   .reveal-delay { animation-delay: 120ms; }
 }
+
+@media print {
+  body { background: white; color: black; }
+  nav, header, .no-print { display: none !important; }
+  .receipt { border: 0; background: white; box-shadow: none; color: black; }
+}

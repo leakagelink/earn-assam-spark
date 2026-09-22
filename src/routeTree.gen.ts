@@ -16,6 +16,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
 import { Route as AuthenticatedProviderSetupRouteImport } from './routes/_authenticated.provider.setup'
+import { Route as AuthenticatedReceiptPaymentIdRouteImport } from './routes/_authenticated.receipt.$paymentId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,12 @@ const AuthenticatedProviderSetupRoute =
     path: '/provider/setup',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedReceiptPaymentIdRoute =
+  AuthenticatedReceiptPaymentIdRouteImport.update({
+    id: '/receipt/$paymentId',
+    path: '/receipt/$paymentId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/provider/setup': typeof AuthenticatedProviderSetupRoute
+  '/receipt/$paymentId': typeof AuthenticatedReceiptPaymentIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/provider/setup': typeof AuthenticatedProviderSetupRoute
+  '/receipt/$paymentId': typeof AuthenticatedReceiptPaymentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -78,13 +87,27 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/provider/setup': typeof AuthenticatedProviderSetupRoute
+  '/_authenticated/receipt/$paymentId': typeof AuthenticatedReceiptPaymentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/search' | '/account' | '/admin' | '/dashboard' | '/provider/setup'
+    | '/'
+    | '/search'
+    | '/account'
+    | '/admin'
+    | '/dashboard'
+    | '/provider/setup'
+    | '/receipt/$paymentId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/account' | '/admin' | '/dashboard' | '/provider/setup'
+  to:
+    | '/'
+    | '/search'
+    | '/account'
+    | '/admin'
+    | '/dashboard'
+    | '/provider/setup'
+    | '/receipt/$paymentId'
   id:
     | '__root__'
     | '/'
@@ -94,6 +117,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/provider/setup'
+    | '/_authenticated/receipt/$paymentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProviderSetupRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/receipt/$paymentId': {
+      id: '/_authenticated/receipt/$paymentId'
+      path: '/receipt/$paymentId'
+      fullPath: '/receipt/$paymentId'
+      preLoaderRoute: typeof AuthenticatedReceiptPaymentIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -161,6 +192,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProviderSetupRoute: typeof AuthenticatedProviderSetupRoute
+  AuthenticatedReceiptPaymentIdRoute: typeof AuthenticatedReceiptPaymentIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -168,6 +200,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProviderSetupRoute: AuthenticatedProviderSetupRoute,
+  AuthenticatedReceiptPaymentIdRoute: AuthenticatedReceiptPaymentIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
